@@ -1,83 +1,101 @@
 # RUN — Outdoor GPS Running Tracker
 
-A modular, production-ready outdoor running tracker built with **React Native** and **Expo**. Tracks real-time GPS coordinates, filters telemetry noise, calculates active duration and average pace, and presents a full route map summary upon run completion.
+A modular, production-grade outdoor running tracker built with **React Native** and **Expo**. Tracks real-time GPS coordinates, filters telemetry noise, computes active duration and average pace, and renders the completed route map summary upon run completion.
 
 ---
 
-## 📱 Features
+## Features
 
-- **Live Telemetry:** Tracks elapsed duration, distance (in kilometers), and running average pace (`min/km`).
-- **State Machine Control:** Seamless transitions between `idle`, `running`, `paused`, and `completed` states.
-- **GPS Noise & Glitch Filtering:** Multi-stage filtering pipeline to ensure reliable metrics without GPS drift.
-- **Route Visualization:** Renders the GPS path using `react-native-maps` polyline on the post-run summary screen.
-- **Decoupled Core Architecture:** Pure TypeScript tracking engine with zero React or native dependencies for maximum testability.
+- **Live Telemetry:** Real-time monitoring of elapsed duration, cumulative distance in kilometers, and running average pace (`min/km`).
+- **State Machine Control:** Deterministic transitions across `idle`, `active`, `paused`, and `finished` states.
+- **Defensive GPS Filtering:** Multi-tier filtering pipeline that eliminates erratic jumps, stale fixes, and stationary jitter.
+- **Route Visualization:** Renders the runner's exact path on an interactive map using `react-native-maps` polyline rendering.
+- **Decoupled Architecture:** Pure TypeScript business logic decoupled from React lifecycle and platform APIs for 100% unit testability.
+- **Persistent Run Storage:** Completed run recordings are persisted locally via AsyncStorage for historical review.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
-The codebase follows a strict separation of concerns across three distinct layers:
+The system maintains a strict separation of concerns between hardware sensor ingestion, business arithmetic, state management, and UI rendering.
 
+```mermaid
+graph TD
+    subgraph UI["Presentation Layer (React Native)"]
+        START["StartScreen"]
+        ACTIVE["ActiveRunScreen"]
+        SUMMARY["SummaryScreen"]
+    end
+
+    subgraph Integration["React Integration Hook"]
+        HOOK["useRunTrackingEngine"]
+    end
+
+    subgraph Core["Domain Engine (Pure TypeScript)"]
+        ENGINE["RunTrackingEngine<br/>(State Machine, GPS Filter & Metrics)"]
+        GEO["geo.ts<br/>(Haversine Formula)"]
+        TYPES["types.ts<br/>(Domain Models)"]
+    end
+
+    subgraph Platform["Device Adapter Layer"]
+        LOC["LocationService<br/>(expo-location)"]
+        GPS["Device GPS Hardware"]
+    end
+
+    subgraph Storage["Persistence Layer"]
+        ASYNC["runStorage.ts<br/>(AsyncStorage)"]
+    end
+
+    GPS -->|Raw GPS Fixes| LOC
+    LOC -->|Location Stream| ENGINE
+    ENGINE --- GEO
+    ENGINE --- TYPES
+    ENGINE -->|Observer State Notifications| HOOK
+    HOOK -->|Reactive Telemetry| UI
+    UI -->|Persist Completed Summary| ASYNC
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      UI / Presentation                      │
-│        (StartScreen, ActiveRunScreen, SummaryScreen)        │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ useRunTrackingEngine (Hook)
-┌──────────────────────────────▼──────────────────────────────┐
-│                    RunTrackingEngine                        │
-│          (Pure State Machine, Math & GPS Filtering)         │
-│                 └── geo.ts (Haversine Formula)              │
-│                 └── types.ts (Shared Domain Models)         │
-└──────────────────────────────▲──────────────────────────────┘
-                               │ Raw Coordinates
-┌──────────────────────────────┴──────────────────────────────┐
-│                      LocationService                        │
-│             (Thin wrapper around expo-location)             │
-└─────────────────────────────────────────────────────────────┘
-```
 
-### File Structure & Responsibilities
+### File Structure and Responsibilities
 
 | File | Purpose |
 |---|---|
-| [`types.ts`](./types.ts) | Shared domain models (`RunPoint`, `RunSummary`, `RunState`, `RawLocation`). |
-| [`geo.ts`](./geo.ts) | Pure Haversine distance calculation formula for geographic coordinates. |
-| [`RunTrackingEngine.ts`](./RunTrackingEngine.ts) | Core business logic: lifecycle state machine, GPS point filtering heuristics, pace, and distance calculation. |
-| [`RunTrackingEngine.test.ts`](./RunTrackingEngine.test.ts) | Comprehensive unit tests verifying GPS filtering, edge cases, and arithmetic without native mocks. |
-| [`locationService.ts`](./locationService.ts) | Thin adapter for `expo-location` requesting foreground permissions and streaming raw fixes. |
-| [`useRunTrackingEngine.ts`](./useRunTrackingEngine.ts) | Custom React hook connecting the engine's observer pattern to React state re-renders. |
-| [`StartScreen.tsx`](./StartScreen.tsx) | Initial state UI handling location permission requests and triggering run start. |
-| [`ActiveRunScreen.tsx`](./ActiveRunScreen.tsx) | Live dashboard rendering elapsed time, distance, pace, and pause/resume/finish actions. |
-| [`SummaryScreen.tsx`](./SummaryScreen.tsx) | Post-run review displaying summary stats and the route polyline on an interactive map. |
+| [`types.ts`](./types.ts) | Shared domain models and interfaces (`RunPoint`, `RunSummary`, `RunState`, `RawLocation`). |
+| [`geo.ts`](./geo.ts) | Pure Haversine distance formula implementation for spherical surface geometry. |
+| [`RunTrackingEngine.ts`](./RunTrackingEngine.ts) | Core domain logic: lifecycle state machine, multi-stage GPS filtering, pace, and distance calculations. |
+| [`RunTrackingEngine.test.ts`](./RunTrackingEngine.test.ts) | Unit tests verifying GPS noise filtering, edge cases, and math without hardware mocks. |
+| [`locationService.ts`](./locationService.ts) | Thin platform adapter managing foreground permissions and streaming raw fixes from `expo-location`. |
+| [`useRunTrackingEngine.ts`](./useRunTrackingEngine.ts) | React hook bridging the engine's observer pattern to component re-renders. |
+| [`StartScreen.tsx`](./StartScreen.tsx) | Entry view with location permission handling, paracetamol pill start action, and recent session preview. |
+| [`ActiveRunScreen.tsx`](./ActiveRunScreen.tsx) | Live dashboard displaying active metrics, run status, and pause/resume/finish controls. |
+| [`SummaryScreen.tsx`](./SummaryScreen.tsx) | Post-run review presenting metrics and route visualization over `react-native-maps`. |
 | [`runStorage.ts`](./runStorage.ts) | Local session persistence using AsyncStorage (`saveRunRecording`, `getStoredRunRecordings`). |
-| [`App.tsx`](./App.tsx) | Root application component coordinating screen transitions based on engine state. |
+| [`App.tsx`](./App.tsx) | Application coordinator managing screen transitions and engine reset lifecycle. |
 
 ---
 
-## 🔬 How Distance & Pace are Calculated
+## Distance and Pace Calculations
 
-Consumer GPS is inherently noisy. Raw location fixes are passed through a defensive filtering pipeline in `RunTrackingEngine` before being incorporated into total distance:
+Consumer GPS receivers inherently produce noise, reflection artifacts, and accuracy fluctuations. Raw fixes are evaluated against four validation filters before contributing to route and distance metrics:
 
-1. **Horizontal Accuracy Cutoff:** Fixes with horizontal accuracy worse than `20 meters` are discarded.
-2. **Staleness Rejection:** Points timestamped older than `5 seconds` when received are dropped.
-3. **Speed Spike Filter:** Fixes that require an instantaneous speed exceeding `6.5 m/s` (faster than `2:34 min/km` pace) are rejected as GPS teleportation/glitches.
-4. **Stationary Jitter Suppression:** Distance between consecutive points smaller than `2 meters` while moving at near-zero velocity is ignored to prevent distance accumulation while standing still.
+1. **Horizontal Accuracy Cutoff:** Fixes reporting an accuracy uncertainty greater than `20 meters` are rejected.
+2. **Staleness Rejection:** Updates with a timestamp older than `5 seconds` relative to receipt time are discarded.
+3. **Speed Spike Filter:** Fixes that imply an instantaneous velocity exceeding `6.5 m/s` (faster than `2:34 min/km` pace) are rejected as teleportation or GPS multipath errors.
+4. **Stationary Jitter Suppression:** Displacements below `2 meters` while moving at near-zero velocity are excluded to prevent artificial distance accumulation when stationary.
 
-### Metrics Logic
+### Metrics Arithmetic
 
-* **Pace:** Calculated as a **running average** (`total distance / total active elapsed time`), updated every second. This avoids erratic rolling-window spikes caused by momentary signal variance.
-* **Duration:** Derived from exact timestamps (`current timestamp - start timestamp - cumulative paused duration`), ensuring zero timer drift if JavaScript execution is momentarily throttled.
+* **Average Pace:** Evaluated as a running average (`total active duration / total distance`), updated once per second. This provides stable readability and eliminates fluctuations inherent to noisy instantaneous speed readings.
+* **Active Duration:** Computed from system timestamps (`current timestamp - start timestamp - total paused time`). This prevents timer drift caused by JavaScript execution throttling.
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- Node.js (v18+)
+- Node.js (v18 or higher)
 - npm or yarn
-- **Expo Go** app installed on your physical iOS or Android device
+- **Expo Go** installed on an iOS or Android physical device
 
 ### Installation
 
@@ -92,23 +110,23 @@ Consumer GPS is inherently noisy. Raw location fixes are passed through a defens
    npm install
    ```
 
-3. Start the Expo development server:
+3. Start the development server:
    ```bash
    npx expo start
    ```
-   *(Or use `npx expo start --tunnel` if testing over different Wi-Fi / cellular networks).*
+   *(Use `npx expo start --tunnel` if testing across different Wi-Fi networks or cellular data).*
 
-4. Scan the QR code using:
-   - **iOS:** Camera app (opens in Expo Go)
-   - **Android:** Expo Go app
+4. Scan the generated QR code:
+   - **iOS:** Scan using the default Camera app (opens in Expo Go).
+   - **Android:** Scan within the Expo Go app.
 
-> **Note:** Testing GPS tracking requires testing on a physical device outdoors. Simulators/emulators will not yield realistic GPS fixes unless locations are actively mocked.
+> **Testing Guidance:** Accurate verification of GPS tracking requires outdoor testing on a physical mobile device. Simulators and emulators do not emit realistic GPS accuracy variations unless explicit location paths are simulated.
 
 ---
 
-## 🧪 Running Tests
+## Running Tests
 
-Unit tests execute directly against the pure `RunTrackingEngine` without needing a physical device or native device mocks:
+Automated unit tests validate engine state transitions, point rejection criteria, and calculation accuracy without hardware dependencies:
 
 ```bash
 npx jest
@@ -116,9 +134,9 @@ npx jest
 
 ---
 
-## ⚖️ Engineering Decisions & Trade-offs
+## Engineering Decisions and Trade-offs
 
-* **Zero Navigation Library Overhead:** Switched between the 3 screens via simple state in `App.tsx`. Introducing `@react-navigation/native` was intentionally avoided to keep bundle size lightweight and dependencies minimal for a focused 3-screen workflow.
-* **Foreground GPS vs Background Tracking:** Built and configured for standard Expo Go usage with foreground location updates (`NSLocationWhenInUseUsageDescription`). Full background tracking requires an EAS standalone build with background location entitlements.
-* **GPS Telemetry vs Step Counting:** GPS was chosen over pedometer/accelerometer estimation as research demonstrates GPS provides superior distance fidelity for outdoor running without requiring user-specific stride length calibration.
-* **Local Run Persistence:** Completed runs and route coordinates are persistently stored on-device using `@react-native-async-storage/async-storage` via `runStorage.ts`, allowing the Start screen to surface previous session stats.
+* **Zero Navigation Overhead:** Screen switching is managed with a lightweight state coordinator in `App.tsx`. Pulling in heavy third-party routing libraries like `@react-navigation/native` was intentionally avoided to keep the bundle footprint minimal for a focused 3-screen workflow.
+* **Foreground GPS vs. Background Tracking:** Configured for foreground updates compatible with standard Expo Go deployments (`NSLocationWhenInUseUsageDescription`). Full background execution requires an EAS standalone build with background location entitlements.
+* **GPS Telemetry vs. Step Counting:** Outdoor running distance is calculated via GPS rather than accelerometer step counting, as step estimation requires individual stride calibration and yields inferior accuracy for outdoor running.
+* **Local Persistence:** Completed runs and route polyline arrays are stored locally on-device using `@react-native-async-storage/async-storage` via `runStorage.ts`, allowing previous session statistics to populate the home interface across relaunches.
