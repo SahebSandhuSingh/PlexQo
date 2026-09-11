@@ -50,6 +50,7 @@ The codebase follows a strict separation of concerns across three distinct layer
 | [`StartScreen.tsx`](./StartScreen.tsx) | Initial state UI handling location permission requests and triggering run start. |
 | [`ActiveRunScreen.tsx`](./ActiveRunScreen.tsx) | Live dashboard rendering elapsed time, distance, pace, and pause/resume/finish actions. |
 | [`SummaryScreen.tsx`](./SummaryScreen.tsx) | Post-run review displaying summary stats and the route polyline on an interactive map. |
+| [`runStorage.ts`](./runStorage.ts) | Local session persistence using AsyncStorage (`saveRunRecording`, `getStoredRunRecordings`). |
 | [`App.tsx`](./App.tsx) | Root application component coordinating screen transitions based on engine state. |
 
 ---
@@ -95,6 +96,7 @@ Consumer GPS is inherently noisy. Raw location fixes are passed through a defens
    ```bash
    npx expo start
    ```
+   *(Or use `npx expo start --tunnel` if testing over different Wi-Fi / cellular networks).*
 
 4. Scan the QR code using:
    - **iOS:** Camera app (opens in Expo Go)
@@ -119,4 +121,4 @@ npx jest
 * **Zero Navigation Library Overhead:** Switched between the 3 screens via simple state in `App.tsx`. Introducing `@react-navigation/native` was intentionally avoided to keep bundle size lightweight and dependencies minimal for a focused 3-screen workflow.
 * **Foreground GPS vs Background Tracking:** Built and configured for standard Expo Go usage with foreground location updates (`NSLocationWhenInUseUsageDescription`). Full background tracking requires an EAS standalone build with background location entitlements.
 * **GPS Telemetry vs Step Counting:** GPS was chosen over pedometer/accelerometer estimation as research demonstrates GPS provides superior distance fidelity for outdoor running without requiring user-specific stride length calibration.
-* **In-Memory Session State:** Runs exist in-memory during execution and are presented on the summary screen. Persistence to SQLite or AsyncStorage was left out of scope for this focused assignment.
+* **Local Run Persistence:** Completed runs and route coordinates are persistently stored on-device using `@react-native-async-storage/async-storage` via `runStorage.ts`, allowing the Start screen to surface previous session stats.
