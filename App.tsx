@@ -7,6 +7,7 @@ import { StartScreen } from './StartScreen';
 import { ActiveRunScreen } from './ActiveRunScreen';
 import { SummaryScreen } from './SummaryScreen';
 import { RunSummary } from './types';
+import { saveRunRecording } from './runStorage';
 
 type Screen = 'start' | 'active' | 'summary';
 
@@ -15,8 +16,8 @@ export default function App() {
   const [lastSummary, setLastSummary] = useState<RunSummary | null>(null);
 
   // Stable instances across re-renders — created once, reused for the app's lifetime.
-  const engineRef = useRef<RunTrackingEngine>();
-  const locationServiceRef = useRef<LocationService>();
+  const engineRef = useRef<RunTrackingEngine | null>(null);
+  const locationServiceRef = useRef<LocationService | null>(null);
   if (!engineRef.current) engineRef.current = new RunTrackingEngine();
   if (!locationServiceRef.current) locationServiceRef.current = new LocationService();
 
@@ -24,18 +25,21 @@ export default function App() {
   const locationService = locationServiceRef.current;
 
   const handleStart = async () => {
+    engine.reset();
     engine.start();
     await locationService.startUpdating((loc) => engine.ingest(loc));
     setScreen('active');
   };
 
-  const handleFinish = (summary: RunSummary) => {
+  const handleFinish = async (summary: RunSummary) => {
     locationService.stopUpdating();
+    await saveRunRecording(summary);
     setLastSummary(summary);
     setScreen('summary');
   };
 
   const handleDone = () => {
+    engine.reset();
     setLastSummary(null);
     setScreen('start');
   };

@@ -30,10 +30,10 @@ function formatPace(secPerKm: number | null): string {
 }
 
 export function ActiveRunScreen({ engine, onFinish }: Props) {
-  // Re-render whenever the engine notifies of a state change.
+  // Re-render whenever the engine notifies of any state change (ticks, pause/resume, GPS fixes).
   useSyncExternalStore(
     (onChange) => engine.subscribe(onChange),
-    () => engine.elapsedTimeSeconds // cheap snapshot value just to trigger updates
+    () => engine.version
   );
 
   const isPaused = engine.state === 'paused';

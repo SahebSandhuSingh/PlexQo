@@ -6,7 +6,7 @@ import { RunTrackingEngine } from './RunTrackingEngine';
  * whenever its internal state changes (distance, pace, elapsed time, etc.).
  */
 export function useRunTrackingEngine(): RunTrackingEngine {
-  const engineRef = useRef<RunTrackingEngine>();
+  const engineRef = useRef<RunTrackingEngine | null>(null);
   if (!engineRef.current) {
     engineRef.current = new RunTrackingEngine();
   }

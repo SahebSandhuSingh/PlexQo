@@ -16,6 +16,7 @@ const MIN_MOVEMENT_M = 2;
  * unit tested; LocationService is the only piece that talks to the device.
  */
 export class RunTrackingEngine {
+  version = 0;
   state: RunState = 'idle';
   totalDistanceMeters = 0;
   elapsedTimeSeconds = 0;
@@ -39,12 +40,33 @@ export class RunTrackingEngine {
   }
 
   private notify() {
+    this.version++;
     this.listeners.forEach((l) => l());
   }
 
   // --- Lifecycle controls ---
 
+  /** Reset all state back to clean initial idle conditions for a new run. */
+  reset() {
+    this.stopUiTimer();
+    this.state = 'idle';
+    this.totalDistanceMeters = 0;
+    this.elapsedTimeSeconds = 0;
+    this.averagePaceSecPerKm = null;
+    this.isGPSSignalWeak = false;
+    this.route = [];
+    this.startTime = null;
+    this.accumulatedPausedMs = 0;
+    this.lastPauseStart = null;
+    this.lastAccepted = null;
+    this.lastFixReceivedAt = null;
+    this.notify();
+  }
+
   start() {
+    if (this.state === 'finished') {
+      this.reset();
+    }
     if (this.state !== 'idle') return;
     this.state = 'active';
     this.startTime = Date.now();
