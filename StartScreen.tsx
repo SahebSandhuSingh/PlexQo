@@ -119,26 +119,15 @@ export function StartScreen({ locationService, onStart, latestRun }: Props) {
             </View>
           </>
         ) : (
-          <>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardTitle}>RUN ENGINE</Text>
-              <Text style={styles.cardTimestamp}>STANDBY</Text>
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIconCircle}>
+              <View style={styles.emptyIconDot} />
             </View>
-            <View style={styles.specsRow}>
-              <View style={styles.specItem}>
-                <Text style={styles.specValue}>High Precision</Text>
-                <Text style={styles.specLabel}>GPS Tracking</Text>
-              </View>
-              <View style={styles.specItem}>
-                <Text style={styles.specValue}>Jitter Filter</Text>
-                <Text style={styles.specLabel}>Noise Rejection</Text>
-              </View>
-              <View style={styles.specItem}>
-                <Text style={styles.specValue}>Polyline</Text>
-                <Text style={styles.specLabel}>Route Map</Text>
-              </View>
-            </View>
-          </>
+            <Text style={styles.emptyTitle}>No runs yet</Text>
+            <Text style={styles.emptySubtitle}>
+              Your latest session will show up here after you finish a run
+            </Text>
+          </View>
         )}
       </View>
     </View>
@@ -330,5 +319,37 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontSize: 11,
     marginTop: 2,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  emptyIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  emptyIconDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#94A3B8',
+  },
+  emptyTitle: {
+    color: '#0F172A',
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  emptySubtitle: {
+    color: '#64748B',
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 17,
+    paddingHorizontal: 12,
   },
 });
