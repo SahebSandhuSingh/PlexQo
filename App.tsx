@@ -46,7 +46,7 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       {screen === 'start' && (
         <StartScreen locationService={locationService} onStart={handleStart} />
       )}
@@ -61,6 +61,6 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B0B0F',
+    backgroundColor: '#F1F5F9',
   },
 });

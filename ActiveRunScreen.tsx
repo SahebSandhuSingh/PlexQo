@@ -103,7 +103,7 @@ export function ActiveRunScreen({ engine, onFinish }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B0B0F',
+    backgroundColor: '#F8F9FA',
     padding: 24,
     justifyContent: 'space-between',
   },
@@ -118,15 +118,15 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginRight: 8,
   },
-  statusDotActive: { backgroundColor: '#3DDC84' },
-  statusDotPaused: { backgroundColor: '#F5A623' },
+  statusDotActive: { backgroundColor: '#10B981' },
+  statusDotPaused: { backgroundColor: '#F59E0B' },
   statusText: {
-    color: '#FFFFFF',
+    color: '#0F172A',
     fontSize: 15,
     fontWeight: '600',
   },
   gpsWarning: {
-    color: '#FF6B6B',
+    color: '#EF4444',
     fontSize: 13,
     marginLeft: 12,
   },
@@ -135,13 +135,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   distanceValue: {
-    color: '#FFFFFF',
+    color: '#0F172A',
     fontSize: 88,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
   distanceLabel: {
-    color: '#9A9AA5',
+    color: '#64748B',
     fontSize: 18,
     marginTop: -8,
   },
@@ -154,13 +154,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   metricValue: {
-    color: '#FFFFFF',
+    color: '#0F172A',
     fontSize: 28,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   metricLabel: {
-    color: '#9A9AA5',
+    color: '#64748B',
     fontSize: 13,
     marginTop: 4,
   },
@@ -172,19 +172,19 @@ const styles = StyleSheet.create({
   pauseResumeButton: {
     flex: 1,
     marginRight: 12,
-    backgroundColor: '#1C1C22',
+    backgroundColor: '#E2E8F0',
     borderRadius: 16,
     paddingVertical: 18,
     alignItems: 'center',
   },
   pauseResumeText: {
-    color: '#FFFFFF',
+    color: '#0F172A',
     fontSize: 17,
     fontWeight: '700',
   },
   finishButton: {
     flex: 1,
-    backgroundColor: '#FF6B6B',
+    backgroundColor: '#EF4444',
     borderRadius: 16,
     paddingVertical: 18,
     alignItems: 'center',

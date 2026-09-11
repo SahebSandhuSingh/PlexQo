@@ -51,7 +51,7 @@ export function SummaryScreen({ summary, onDone }: Props) {
             longitudeDelta: 0.01,
           }}
         >
-          <Polyline coordinates={coordinates} strokeWidth={4} strokeColor="#3DDC84" />
+          <Polyline coordinates={coordinates} strokeWidth={4} strokeColor="#10B981" />
         </MapView>
       )}
       {!hasRoute && (
@@ -92,12 +92,12 @@ const { width } = Dimensions.get('window');
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B0B0F',
+    backgroundColor: '#F8F9FA',
     padding: 24,
     alignItems: 'center',
   },
   title: {
-    color: '#FFFFFF',
+    color: '#0F172A',
     fontSize: 24,
     fontWeight: '800',
     marginTop: 16,
@@ -107,19 +107,23 @@ const styles = StyleSheet.create({
     width: width - 48,
     height: 220,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     marginBottom: 24,
   },
   mapPlaceholder: {
     width: width - 48,
     height: 220,
     borderRadius: 16,
-    backgroundColor: '#1C1C22',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
   },
   mapPlaceholderText: {
-    color: '#9A9AA5',
+    color: '#64748B',
     fontSize: 13,
   },
   statsRow: {
@@ -132,24 +136,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statValue: {
-    color: '#FFFFFF',
+    color: '#0F172A',
     fontSize: 26,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
   statLabel: {
-    color: '#9A9AA5',
+    color: '#64748B',
     fontSize: 13,
     marginTop: 4,
   },
   doneButton: {
-    backgroundColor: '#3DDC84',
+    backgroundColor: '#0F172A',
     paddingVertical: 16,
     paddingHorizontal: 64,
     borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
   },
   doneButtonText: {
-    color: '#0B0B0F',
+    color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '700',
   },
