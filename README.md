@@ -11,7 +11,7 @@ A modular, production-grade outdoor running tracker built with **React Native** 
 - **Defensive GPS Filtering:** Multi-tier filtering pipeline that eliminates erratic jumps, stale fixes, and stationary jitter.
 - **Route Visualization:** Renders the runner's exact path on an interactive map using `react-native-maps` polyline rendering.
 - **Decoupled Architecture:** Pure TypeScript business logic decoupled from React lifecycle and platform APIs for 100% unit testability.
-- **Persistent Run Storage:** Completed run recordings are persisted locally via AsyncStorage for historical review.
+- **Session Memory:** Retains the latest completed run's metrics (distance, duration, pace) to display on the Start Screen.
 
 ---
 
@@ -21,29 +21,30 @@ The system maintains a strict separation of concerns between hardware sensor ing
 
 ```mermaid
 graph TD
+    classDef uiLayer fill:#E0F2FE,stroke:#0284C7,stroke-width:2px,color:#0C4A6E;
+    classDef hookLayer fill:#F3E8FF,stroke:#9333EA,stroke-width:2px,color:#581C87;
+    classDef coreLayer fill:#DCFCE7,stroke:#16A34A,stroke-width:2px,color:#14532D;
+    classDef platformLayer fill:#FEF3C7,stroke:#D97706,stroke-width:2px,color:#78350F;
+
     subgraph UI["Presentation Layer (React Native)"]
-        START["StartScreen"]
-        ACTIVE["ActiveRunScreen"]
-        SUMMARY["SummaryScreen"]
+        START["StartScreen<br/>(Latest Session Preview)"]:::uiLayer
+        ACTIVE["ActiveRunScreen<br/>(Live Telemetry & Controls)"]:::uiLayer
+        SUMMARY["SummaryScreen<br/>(Route Map & Final Stats)"]:::uiLayer
     end
 
     subgraph Integration["React Integration Hook"]
-        HOOK["useRunTrackingEngine"]
+        HOOK["useRunTrackingEngine"]:::hookLayer
     end
 
     subgraph Core["Domain Engine (Pure TypeScript)"]
-        ENGINE["RunTrackingEngine<br/>(State Machine, GPS Filter & Metrics)"]
-        GEO["geo.ts<br/>(Haversine Formula)"]
-        TYPES["types.ts<br/>(Domain Models)"]
+        ENGINE["RunTrackingEngine<br/>(State Machine, Noise Filtering & Math)"]:::coreLayer
+        GEO["geo.ts<br/>(Haversine Distance)"]:::coreLayer
+        TYPES["types.ts<br/>(Domain Models)"]:::coreLayer
     end
 
-    subgraph Platform["Device Adapter Layer"]
-        LOC["LocationService<br/>(expo-location)"]
-        GPS["Device GPS Hardware"]
-    end
-
-    subgraph Storage["Persistence Layer"]
-        ASYNC["runStorage.ts<br/>(AsyncStorage)"]
+    subgraph Platform["Platform Layer"]
+        LOC["LocationService<br/>(expo-location Adapter)"]:::platformLayer
+        GPS["Device GPS Hardware"]:::platformLayer
     end
 
     GPS -->|Raw GPS Fixes| LOC
@@ -52,7 +53,7 @@ graph TD
     ENGINE --- TYPES
     ENGINE -->|Observer State Notifications| HOOK
     HOOK -->|Reactive Telemetry| UI
-    UI -->|Persist Completed Summary| ASYNC
+    SUMMARY -.->|Surfaces Latest Session| START
 ```
 
 ### File Structure and Responsibilities
@@ -65,10 +66,9 @@ graph TD
 | [`RunTrackingEngine.test.ts`](./RunTrackingEngine.test.ts) | Unit tests verifying GPS noise filtering, edge cases, and math without hardware mocks. |
 | [`locationService.ts`](./locationService.ts) | Thin platform adapter managing foreground permissions and streaming raw fixes from `expo-location`. |
 | [`useRunTrackingEngine.ts`](./useRunTrackingEngine.ts) | React hook bridging the engine's observer pattern to component re-renders. |
-| [`StartScreen.tsx`](./StartScreen.tsx) | Entry view with location permission handling, paracetamol pill start action, and recent session preview. |
+| [`StartScreen.tsx`](./StartScreen.tsx) | Entry view with location permission handling, paracetamol pill start action, and latest session preview. |
 | [`ActiveRunScreen.tsx`](./ActiveRunScreen.tsx) | Live dashboard displaying active metrics, run status, and pause/resume/finish controls. |
 | [`SummaryScreen.tsx`](./SummaryScreen.tsx) | Post-run review presenting metrics and route visualization over `react-native-maps`. |
-| [`runStorage.ts`](./runStorage.ts) | Local session persistence using AsyncStorage (`saveRunRecording`, `getStoredRunRecordings`). |
 | [`App.tsx`](./App.tsx) | Application coordinator managing screen transitions and engine reset lifecycle. |
 
 ---
@@ -139,4 +139,4 @@ npx jest
 * **Zero Navigation Overhead:** Screen switching is managed with a lightweight state coordinator in `App.tsx`. Pulling in heavy third-party routing libraries like `@react-navigation/native` was intentionally avoided to keep the bundle footprint minimal for a focused 3-screen workflow.
 * **Foreground GPS vs. Background Tracking:** Configured for foreground updates compatible with standard Expo Go deployments (`NSLocationWhenInUseUsageDescription`). Full background execution requires an EAS standalone build with background location entitlements.
 * **GPS Telemetry vs. Step Counting:** Outdoor running distance is calculated via GPS rather than accelerometer step counting, as step estimation requires individual stride calibration and yields inferior accuracy for outdoor running.
-* **Local Persistence:** Completed runs and route polyline arrays are stored locally on-device using `@react-native-async-storage/async-storage` via `runStorage.ts`, allowing previous session statistics to populate the home interface across relaunches.
+* **In-Memory Session Architecture:** Runs are processed in-memory during app execution, and the latest completed session is retained in state and highlighted on the Start Screen. Heavy persistent databases were avoided to maintain zero-overhead performance.

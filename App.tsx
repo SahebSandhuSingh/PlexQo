@@ -7,13 +7,13 @@ import { StartScreen } from './StartScreen';
 import { ActiveRunScreen } from './ActiveRunScreen';
 import { SummaryScreen } from './SummaryScreen';
 import { RunSummary } from './types';
-import { saveRunRecording } from './runStorage';
 
 type Screen = 'start' | 'active' | 'summary';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('start');
   const [lastSummary, setLastSummary] = useState<RunSummary | null>(null);
+  const [latestRun, setLatestRun] = useState<RunSummary | null>(null);
 
   // Stable instances across re-renders — created once, reused for the app's lifetime.
   const engineRef = useRef<RunTrackingEngine | null>(null);
@@ -31,10 +31,10 @@ export default function App() {
     setScreen('active');
   };
 
-  const handleFinish = async (summary: RunSummary) => {
+  const handleFinish = (summary: RunSummary) => {
     locationService.stopUpdating();
-    await saveRunRecording(summary);
     setLastSummary(summary);
+    setLatestRun(summary);
     setScreen('summary');
   };
 
@@ -48,7 +48,11 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       {screen === 'start' && (
-        <StartScreen locationService={locationService} onStart={handleStart} />
+        <StartScreen
+          locationService={locationService}
+          onStart={handleStart}
+          latestRun={latestRun}
+        />
       )}
       {screen === 'active' && <ActiveRunScreen engine={engine} onFinish={handleFinish} />}
       {screen === 'summary' && lastSummary && (

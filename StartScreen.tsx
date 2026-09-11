@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { LocationService, PermissionState } from './locationService';
-import { getStoredRunRecordings } from './runStorage';
 import { RunSummary } from './types';
 
 interface Props {
   locationService: LocationService;
   onStart: () => void;
+  latestRun?: RunSummary | null;
 }
 
 function formatDuration(totalSeconds: number): string {
@@ -25,18 +25,9 @@ function formatPace(secPerKm: number | null): string {
   return `${m}:${s.toString().padStart(2, '0')} /km`;
 }
 
-export function StartScreen({ locationService, onStart }: Props) {
+export function StartScreen({ locationService, onStart, latestRun }: Props) {
   const [permission, setPermission] = useState<PermissionState>('notDetermined');
   const [requesting, setRequesting] = useState(false);
-  const [recentRun, setRecentRun] = useState<RunSummary | null>(null);
-
-  useEffect(() => {
-    getStoredRunRecordings().then((runs) => {
-      if (runs && runs.length > 0) {
-        setRecentRun(runs[0]);
-      }
-    });
-  }, []);
 
   const handleStart = async () => {
     setRequesting(true);
@@ -90,12 +81,12 @@ export function StartScreen({ locationService, onStart }: Props) {
 
       {/* Bottom Information Card */}
       <View style={styles.bottomCard}>
-        {recentRun ? (
+        {latestRun ? (
           <>
             <View style={styles.cardHeader}>
               <Text style={styles.cardTitle}>LATEST SESSION</Text>
               <Text style={styles.cardTimestamp}>
-                {new Date(recentRun.finishedAt).toLocaleDateString(undefined, {
+                {new Date(latestRun.finishedAt).toLocaleDateString(undefined, {
                   month: 'short',
                   day: 'numeric',
                 })}
@@ -104,7 +95,7 @@ export function StartScreen({ locationService, onStart }: Props) {
             <View style={styles.statsRow}>
               <View style={styles.statColumn}>
                 <Text style={styles.statValue}>
-                  {(recentRun.totalDistanceMeters / 1000).toFixed(2)}
+                  {(latestRun.totalDistanceMeters / 1000).toFixed(2)}
                 </Text>
                 <Text style={styles.statUnit}>km</Text>
                 <Text style={styles.statLabel}>Distance</Text>
@@ -112,7 +103,7 @@ export function StartScreen({ locationService, onStart }: Props) {
               <View style={styles.statDivider} />
               <View style={styles.statColumn}>
                 <Text style={styles.statValue}>
-                  {formatDuration(recentRun.totalDurationSeconds)}
+                  {formatDuration(latestRun.totalDurationSeconds)}
                 </Text>
                 <Text style={styles.statUnit}>time</Text>
                 <Text style={styles.statLabel}>Duration</Text>
@@ -120,7 +111,7 @@ export function StartScreen({ locationService, onStart }: Props) {
               <View style={styles.statDivider} />
               <View style={styles.statColumn}>
                 <Text style={styles.statValue}>
-                  {formatPace(recentRun.averagePaceSecPerKm).replace(' /km', '')}
+                  {formatPace(latestRun.averagePaceSecPerKm).replace(' /km', '')}
                 </Text>
                 <Text style={styles.statUnit}>/km</Text>
                 <Text style={styles.statLabel}>Avg Pace</Text>
